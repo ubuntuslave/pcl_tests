@@ -43,11 +43,11 @@ if (PCL_FOUND)
   add_executable(pcd_write_test src/pcd_write.cpp)
   target_link_libraries(pcd_write_test ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
 
-  #add_executable(test_marching_cubes
-  #                            src/test_marching_cubes.cpp)
-  #target_link_libraries(test_marching_cubes 
-  #                        filtered_clouds_lib 
-  #						)
+  add_executable(test_marching_cubes
+                              src/test_marching_cubes.cpp)
+  target_link_libraries(test_marching_cubes 
+                          filtered_clouds_lib 
+  						)
 
   add_executable(test_greedy_mesh
                             src/greedy_projection.cpp)

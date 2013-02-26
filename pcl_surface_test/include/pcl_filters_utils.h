@@ -12,9 +12,20 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/features/normal_3d.h>
 
-typedef pcl::PointXYZRGB PointT;
-typedef pcl::PointCloud<PointT> PointCloudT;
-typedef pcl::PointXYZRGBNormal PointNormalT;
+//#define USE_RGB_COLOR
+
+#ifdef USE_RGB_COLOR
+    typedef pcl::PointXYZRGB PointT;
+    typedef pcl::PointCloud<PointT> PointCloudT;
+    typedef pcl::PointXYZRGBNormal PointNormalT;
+    typedef pcl::PointCloud<PointNormalT> PointCloudNormalT;
+#else
+    typedef pcl::PointXYZ                  PointT;
+    typedef pcl::PointCloud<PointT>        PointCloudT;
+    typedef pcl::PointXYZINormal           PointNormalT;
+    typedef pcl::PointCloud<PointNormalT> PointCloudNormalT;
+#endif
+
 
 void spatialFilter(const PointCloudT::Ptr &cloud_in, PointCloudT::Ptr &cloud_out, double neighbor_max_proximity);
 

@@ -40,9 +40,9 @@ main (int argc, char** argv)
     with_smoothing = true;
 
   // Load input file into a PointCloud<T> with an appropriate type
-  pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT>);
-  pcl::PointCloud<PointT>::Ptr cloud_filtered (new pcl::PointCloud<PointT>);
-  pcl::PointCloud<PointT>::Ptr cloud_for_mesh (new pcl::PointCloud<PointT>);
+  PointCloudT::Ptr cloud (new PointCloudT);
+  PointCloudT::Ptr cloud_filtered (new PointCloudT);
+  PointCloudT::Ptr cloud_for_mesh (new PointCloudT);
 //  pcl::PointCloud<PointT>::Ptr cloud_filtered_twice(new pcl::PointCloud<PointT>);
   sensor_msgs::PointCloud2 cloud_blob;
 //  pcl::io::loadPCDFile ("bun0.pcd", cloud_blob);
@@ -76,7 +76,6 @@ main (int argc, char** argv)
 
   spatialFilter(cloud_filtered, cloud_for_mesh, neighbor_max_proximity);
 
-  /* FIXME:
   if(with_smoothing)
   {
   // smooth using mls
@@ -85,7 +84,7 @@ main (int argc, char** argv)
     mls_tree.reset(new pcl::search::KdTree<PointT>());
 
     printf("MLS...\n");
-    pcl::MovingLeastSquares<PointT, PointNormalT> mls;
+    pcl::MovingLeastSquares<PointT, PointT> mls;
     mls.setInputCloud (cloud_for_mesh);
     mls.setPolynomialFit (true);
     mls.setSearchMethod (mls_tree);
@@ -95,7 +94,7 @@ main (int argc, char** argv)
     printf("done!\n");
 
   }
-  */
+
 
   pcl::PCDWriter writer;
   std::string downsampled_pcd_filename;

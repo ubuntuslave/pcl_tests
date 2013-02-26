@@ -48,31 +48,19 @@
 #include <pcl/surface/marching_cubes_hoppe.h>
 #include <pcl/surface/marching_cubes_rbf.h>
 #include <pcl/common/common.h>
+#include <pcl/io/ply_io.h>
+#include <pcl/io/vtk_io.h>
+
 
 // Filters:
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/radius_outlier_removal.h>
+#include "pcl_filters_utils.h"
 
 
 using namespace pcl;
 using namespace pcl::io;
 using namespace std;
-
-
-typedef pcl::PointXYZRGB PointT;
-typedef pcl::PointXYZRGBNormal PointNormalT;
-
-
-PointCloud<PointXYZ>::Ptr cloud (new PointCloud<PointXYZ>);
-PointCloud<PointNormal>::Ptr cloud_with_normals (new PointCloud<PointNormal>);
-search::KdTree<PointXYZ>::Ptr tree;
-search::KdTree<PointNormal>::Ptr tree2;
-
-// add by ktran to test update functions
-PointCloud<PointXYZ>::Ptr cloud1 (new PointCloud<PointXYZ>);
-PointCloud<PointNormal>::Ptr cloud_with_normals1 (new PointCloud<PointNormal>);
-search::KdTree<PointXYZ>::Ptr tree3;
-search::KdTree<PointNormal>::Ptr tree4;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int
@@ -80,13 +68,13 @@ main (int argc, char** argv)
 {
   if(argc != 6)
   {
-    printf("ERROR: Usage is %s pcd_filename_prefix voxel_grid_filter_res neighbor_max_prox smoothing_res mesh_search_radius\n", argv[0]);
+    printf("ERROR: Usage is %s pcd_filename_prefix voxel_grid_filter_res neighbor_max_prox smoothing_res march_cube_grid_res\n", argv[0]);
     return -1;
   }
   double vgf_res = atof(argv[2]);
   double neighbor_max_proximity = atof(argv[3]);
   double smoothing_res = atof(argv[4]);
-  double mesh_search_radius = atof(argv[5]);
+  double march_cube_grid_res = atof(argv[5]);
 
   bool with_smoothing = false;
   if(smoothing_res > 0.0)
@@ -94,7 +82,7 @@ main (int argc, char** argv)
 
   // Load input file into a PointCloud<T> with an appropriate type
   pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT>);
-  pcl::PointCloud<PointT>::Ptr cloud_filtered (new pcl::PointCloud<PointT>);
+//  pcl::PointCloud<PointT>::Ptr cloud_filtered (new pcl::PointCloud<PointT>);
   pcl::PointCloud<PointT>::Ptr cloud_for_mesh (new pcl::PointCloud<PointT>);
 //  pcl::PointCloud<PointT>::Ptr cloud_filtered_twice(new pcl::PointCloud<PointT>);
   sensor_msgs::PointCloud2 cloud_blob;
@@ -107,36 +95,46 @@ main (int argc, char** argv)
   pcl::VoxelGrid<PointT> sor1;
   sor1.setInputCloud (cloud);
   sor1.setLeafSize (vgf_res, vgf_res, vgf_res);
-  sor1.filter (*cloud_filtered);
+//  sor1.filter (*cloud_filtered);
+  sor1.filter (*cloud_for_mesh);
 
+//  spatialFilter(cloud_filtered, cloud_for_mesh, neighbor_max_proximity);
 
-
-
-
-
-
-  // --------------------------------------------------------------------------------------------
-  // Create search tree
-  tree.reset (new search::KdTree<PointXYZ> (false));
-  tree->setInputCloud (cloud);
 
   // Normal estimation
-  NormalEstimation<PointXYZ, Normal> n;
-  PointCloud<Normal>::Ptr normals (new PointCloud<Normal> ());
-  n.setInputCloud (cloud);
-  //n.setIndices (indices[B);
+  pcl::NormalEstimation<PointT, pcl::Normal> n;
+  pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+  // Create search tree for normal estimation
+  pcl::search::KdTree<PointT>::Ptr tree (new pcl::search::KdTree<PointT>);
+  tree->setInputCloud (cloud_for_mesh);
+  n.setInputCloud (cloud_for_mesh);
   n.setSearchMethod (tree);
   n.setKSearch (20);
+  printf("Computing Normals...\n");
   n.compute (*normals);
+  // normals should not contain the point normals + surface curvatures
+  printf("done!\n");
 
-  // Concatenate XYZ and normal information
-  pcl::concatenateFields (*cloud, *normals, *cloud_with_normals);
-      
-  // Create search tree
-  tree2.reset (new search::KdTree<PointNormal>);
+  // Concatenate the XYZ and normal fields
+  PointCloudNormalT::Ptr cloud_with_normals (new PointCloudNormalT);
+  pcl::concatenateFields (*cloud_for_mesh, *normals, *cloud_with_normals);
+  // cloud_with_normals = cloud + normals
+
+  // Create search tree of normals
+  pcl::search::KdTree<PointNormalT>::Ptr tree2 (new pcl::search::KdTree<PointNormalT>);
   tree2->setInputCloud (cloud_with_normals);
 
+  // Initialize objects
+  printf("Start marching, goddamn cubes!\n");
+
   // Process for update cloud
+  /* TODO:
+  // add by ktran to test update functions
+  PointCloud<PointXYZ>::Ptr cloud1 (new PointCloud<PointXYZ>);
+  PointCloud<PointNormal>::Ptr cloud_with_normals1 (new PointCloud<PointNormal>);
+  search::KdTree<PointXYZ>::Ptr tree3;
+  search::KdTree<PointNormal>::Ptr tree4;
+
   if(argc == 3){
     sensor_msgs::PointCloud2 cloud_blob1;
     loadPCDFile (argv[2], cloud_blob1);
@@ -160,23 +158,52 @@ main (int argc, char** argv)
     tree4.reset (new search::KdTree<PointNormal>);
     tree4->setInputCloud (cloud_with_normals1);
   }
+  */
 
-  MarchingCubesHoppe<PointNormal> hoppe;
+  // FIXME: choose your flavor:
+  // OLD
+  MarchingCubesHoppe<PointNormalT> hoppe;
     hoppe.setIsoLevel (0);
     hoppe.setGridResolution (30, 30, 30);
     hoppe.setPercentageExtendGrid (0.3f);
     hoppe.setInputCloud (cloud_with_normals);
-    PointCloud<PointNormal> points;
-    std::vector<Vertices> vertices;
-    hoppe.reconstruct (points, vertices);
+    printf("Reconstructing mesh...\n");
+    pcl::PolygonMesh triangles;
+    hoppe.reconstruct (triangles);
+  /*
+  //NEWER: // TODO: parametrize
+  MarchingCubesRBF<PointNormalT> rbf;
+  //rbf.setIsoLevel (0);
+  rbf.setGridResolution (march_cube_grid_res, march_cube_grid_res, march_cube_grid_res);
+  //rbf.setPercentageExtendGrid (0.1f);
+  rbf.setInputCloud (cloud_with_normals);
+  rbf.setSearchMethod(tree2);
+  //rbf.setOffSurfaceDisplacement (0.02f);
+  printf("Reconstructing mesh...\n");
+  pcl::PolygonMesh triangles;
+  rbf.reconstruct (triangles);
+  */
 
-    MarchingCubesRBF<PointNormal> rbf;
-    rbf.setIsoLevel (0);
-    rbf.setGridResolution (20, 20, 20);
-    rbf.setPercentageExtendGrid (0.1f);
-    rbf.setInputCloud (cloud_with_normals);
-    rbf.setOffSurfaceDisplacement (0.02f);
-    rbf.reconstruct (points, vertices);
-  return 0;
+
+
+
+  // Additional vertex information
+  /*
+  PointCloudNormalT points;
+  std::vector<Vertices> vertices;
+  rbf.reconstruct (points, vertices);
+  */
+
+  std::string mesh_filename;
+  if(with_smoothing)
+    mesh_filename = std::string(argv[1]) + "_mesh_smoothed";
+  else
+    mesh_filename = std::string(argv[1]) + "_mesh";
+
+  pcl::io::saveVTKFile (mesh_filename+".vtk", triangles);
+  pcl::io::savePLYFile(mesh_filename+".ply", triangles);
+
+  // Finish
+  return (0);
 }
 /* ]--- */
