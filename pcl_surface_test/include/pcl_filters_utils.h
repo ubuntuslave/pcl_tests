@@ -12,7 +12,7 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/features/normal_3d.h>
 
-//#define USE_RGB_COLOR
+#define USE_RGB_COLOR
 
 #ifdef USE_RGB_COLOR
     typedef pcl::PointXYZRGB PointT;

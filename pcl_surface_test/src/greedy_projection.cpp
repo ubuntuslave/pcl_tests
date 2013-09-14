@@ -119,7 +119,7 @@ main (int argc, char** argv)
   printf("done!\n");
 
   // Concatenate the XYZ and normal fields*
-  pcl::PointCloud<PointNormalT>::Ptr cloud_with_normals (new pcl::PointCloud<PointNormalT>);
+  PointCloudNormalT::Ptr cloud_with_normals (new pcl::PointCloud<PointNormalT>);
   pcl::concatenateFields (*cloud_for_mesh, *normals, *cloud_with_normals);
   // cloud_with_normals = cloud + normals
 

@@ -23,7 +23,7 @@ include_directories(${PCL_FILTERS_TEST_SOURCE_DIR}/include)
 if(APPLE)
     include_directories (/usr/include/c++/4.2.1) 
 else()
-    set(PCL_DIR "/home/carlos/src/pcl-1.6.0-build")
+    set(PCL_DIR "/home/carlos/src/pcl-1.6.0/build")
 endif(APPLE)
 
 find_package(PCL 1.6 REQUIRED COMPONENTS common io filters keypoints features surface kdtree search)
@@ -42,6 +42,9 @@ if (PCL_FOUND)
   
   add_executable(pcd_write_test src/pcd_write.cpp)
   target_link_libraries(pcd_write_test ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
+
+  add_executable(my_ply2pcd src/my_ply2pcd.cpp)
+  target_link_libraries(my_ply2pcd ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
 
   add_executable(test_marching_cubes
                               src/test_marching_cubes.cpp)

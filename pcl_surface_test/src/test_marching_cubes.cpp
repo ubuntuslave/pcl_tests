@@ -116,7 +116,7 @@ main (int argc, char** argv)
   printf("done!\n");
 
   // Concatenate the XYZ and normal fields
-  PointCloudNormalT::Ptr cloud_with_normals (new PointCloudNormalT);
+  PointCloudNormalT::Ptr cloud_with_normals (new pcl::PointCloud<PointNormalT>);
   pcl::concatenateFields (*cloud_for_mesh, *normals, *cloud_with_normals);
   // cloud_with_normals = cloud + normals
 
@@ -163,9 +163,10 @@ main (int argc, char** argv)
   // FIXME: choose your flavor:
   // OLD
   MarchingCubesHoppe<PointNormalT> hoppe;
-    hoppe.setIsoLevel (0);
-    hoppe.setGridResolution (30, 30, 30);
-    hoppe.setPercentageExtendGrid (0.3f);
+    hoppe.setIsoLevel (0.5);
+    hoppe.setGridResolution (march_cube_grid_res, march_cube_grid_res, march_cube_grid_res);
+//    hoppe.setPercentageExtendGrid (0.3f);
+    hoppe.setPercentageExtendGrid (0);
     hoppe.setInputCloud (cloud_with_normals);
     printf("Reconstructing mesh...\n");
     pcl::PolygonMesh triangles;
