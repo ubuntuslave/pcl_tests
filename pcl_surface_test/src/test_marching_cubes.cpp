@@ -85,12 +85,14 @@ main (int argc, char** argv)
 //  pcl::PointCloud<PointT>::Ptr cloud_filtered (new pcl::PointCloud<PointT>);
   pcl::PointCloud<PointT>::Ptr cloud_for_mesh (new pcl::PointCloud<PointT>);
 //  pcl::PointCloud<PointT>::Ptr cloud_filtered_twice(new pcl::PointCloud<PointT>);
+#ifdef __APPLE__
+  pcl::io::loadPCDFile (std::string(argv[1]) + ".pcd", *cloud);
+#else
   sensor_msgs::PointCloud2 cloud_blob;
 //  pcl::io::loadPCDFile ("bun0.pcd", cloud_blob);
-
   pcl::io::loadPCDFile (std::string(argv[1]) + ".pcd", cloud_blob);
   pcl::fromROSMsg (cloud_blob, *cloud);
-
+#endif
   // Create the filtering object
   pcl::VoxelGrid<PointT> sor1;
   sor1.setInputCloud (cloud);

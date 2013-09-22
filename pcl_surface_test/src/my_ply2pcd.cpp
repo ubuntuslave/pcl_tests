@@ -15,14 +15,17 @@ main (int argc, char** argv)
   }
 
   // Load input file into a PointCloud<T> with an appropriate type
-  PointCloudT::Ptr cloud_output (new PointCloudT);
+  PointCloudT::Ptr cloud (new PointCloudT);
 
-  sensor_msgs::PointCloud2 cloud_msg_from_ply;
+  // ROS only:
+//  sensor_msgs::PointCloud2 cloud_msg_from_ply;
+//  pcl::io::loadPLYFile(std::string(argv[1]), cloud_msg_from_ply);
+  // Convert to Point cloud pointer type
+//  pcl::fromROSMsg (cloud_msg_from_ply, *cloud);
+
 //  pcl::io::loadPCDFile ("bun0.pcd", cloud_blob);
 
-  pcl::io::loadPLYFile(std::string(argv[1]), cloud_msg_from_ply);
-  // Convert to Point cloud pointer type
-  pcl::fromROSMsg (cloud_msg_from_ply, *cloud_output);
+  pcl::io::loadPLYFile(std::string(argv[1]), *cloud);
 
   pcl::PCDWriter writer;
   std::string output_pcd_filename;
@@ -32,7 +35,7 @@ main (int argc, char** argv)
     output_pcd_filename = std::string(argv[2]);
 
 
-  int result_pcd = writer.writeBinary<PointT>(output_pcd_filename, *cloud_output);
+  int result_pcd = writer.writeBinary<PointT>(output_pcd_filename, *cloud);
 
   // Finish
   return (0);
